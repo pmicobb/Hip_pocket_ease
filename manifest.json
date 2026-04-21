@@ -1,6 +1,6 @@
 {
-  "name": "Hippocketease",
-  "short_name": "Hippocketease",
+  "name": "HipPocketEASE",
+  "short_name": "HipPocketEASE",
   "description": "NASPGHAN algorithm-based decision support for pediatric foreign body ingestions. Quick-reference triage for front-line providers.",
   "start_url": "./index.html",
   "scope": "./",

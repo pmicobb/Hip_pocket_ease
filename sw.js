@@ -1,9 +1,9 @@
-// Hippocketease Service Worker (hardened for testing)
+// HipPocketEASE Service Worker (hardened for testing)
 // - Caches only a pre-declared allowlist of same-origin files.
 // - Does NOT cache cross-origin or unexpected responses.
 // - Falls back to a clear offline message if the app shell isn't cached.
 
-const CACHE_NAME = 'hippocketease-test-v1';
+const CACHE_NAME = 'hippocketease-test-v2';
 const ORIGIN = self.location.origin;
 const APP_FILES = [
   './',

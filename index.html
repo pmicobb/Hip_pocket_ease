@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Hippocketease — Pediatric FB Triage (Testing Build)</title>
+<title>HipPocketEASE — Pediatric FB Triage (Testing Build)</title>
 
 <!-- Content Security Policy: blocks any unexpected resource load.
      Allows only inline styles/scripts from this file (needed for single-file PWA)
@@ -28,7 +28,7 @@
 <meta name="theme-color" content="#0c4a6e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Hippocketease">
+<meta name="apple-mobile-web-app-title" content="HipPocketEASE">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 
@@ -431,7 +431,7 @@
   <div class="test-banner">⚗️ TESTING BUILD — NOT FOR CLINICAL USE</div>
 
   <header>
-    <h1>Hippocketease</h1>
+    <h1>HipPocketEASE</h1>
     <div class="sub">
       <p>Pediatric FB triage — decision support</p>
       <button class="menu-btn" onclick="openMenu()" aria-label="Menu">☰</button>
@@ -451,7 +451,7 @@
 <div class="overlay centered" id="disclaimerOverlay">
   <div class="sheet">
     <h2>⚠️ Before you begin</h2>
-    <p><strong>This is a testing build.</strong> Hippocketease is a decision-support tool based on the 2015 NASPGHAN pediatric foreign body ingestion algorithms (Kramer et al.).</p>
+    <p><strong>This is a testing build.</strong> HipPocketEASE is a decision-support tool based on the 2015 NASPGHAN pediatric foreign body ingestion algorithms (Kramer et al.).</p>
     <p>This tool is <strong>not a substitute</strong> for clinical judgment, institutional protocols, or direct consultation with Pediatric Gastroenterology. It does not establish a legal standard of care. You remain fully responsible for all clinical decisions.</p>
     <p>No patient data entered here is transmitted or stored off this device. Session history is kept locally on this device only and can be cleared at any time from the menu.</p>
     <div class="checkbox-row" onclick="toggleCheckbox()">
@@ -468,7 +468,7 @@
 <div class="overlay centered" id="pinOverlay">
   <div class="sheet">
     <h2 id="pinTitle">Enter PIN</h2>
-    <p id="pinSubtitle">Enter your 4-digit PIN to unlock Hippocketease.</p>
+    <p id="pinSubtitle">Enter your 4-digit PIN to unlock HipPocketEASE.</p>
     <div class="pin-display" id="pinDisplay"></div>
     <div class="pin-error" id="pinError"></div>
     <div class="pin-pad" id="pinPad"></div>
@@ -485,7 +485,7 @@
     <button class="menu-item" onclick="showHistory()"><span class="emoji">📋</span>Assessment history</button>
     <button class="menu-item" onclick="showFeedback()"><span class="emoji">💬</span>Send feedback to developer</button>
     <button class="menu-item" id="pinMenuItem" onclick="managePin()"><span class="emoji">🔒</span>Set / change PIN</button>
-    <button class="menu-item" onclick="showAbout()"><span class="emoji">ℹ️</span>About Hippocketease</button>
+    <button class="menu-item" onclick="showAbout()"><span class="emoji">ℹ️</span>About HipPocketEASE</button>
     <button class="menu-item" onclick="closeMenu()" style="background:#f1f5f9;text-align:center;margin-top:12px;"><strong>Close</strong></button>
   </div>
 </div>
@@ -507,7 +507,7 @@
 <div class="overlay" id="feedbackOverlay" onclick="if(event.target===this)closeFeedback()">
   <div class="sheet">
     <h2>Send feedback</h2>
-    <p>Help improve Hippocketease. Your feedback stays on this device until you choose to send it by email.</p>
+    <p>Help improve HipPocketEASE. Your feedback stays on this device until you choose to send it by email.</p>
     <textarea class="feedback-textarea" id="feedbackText" placeholder="What worked? What didn't? Any incorrect recommendations? Ideas for improvement?"></textarea>
     <div class="actions">
       <button class="btn-secondary" onclick="closeFeedback()">Cancel</button>
@@ -519,7 +519,7 @@
 <!-- About overlay -->
 <div class="overlay" id="aboutOverlay" onclick="if(event.target===this)closeAbout()">
   <div class="sheet">
-    <h2>About Hippocketease</h2>
+    <h2>About HipPocketEASE</h2>
     <p><strong>Version:</strong> Testing Build 0.1</p>
     <p>A pediatric foreign body ingestion triage aid based on the 2015 NASPGHAN algorithms (Kramer et al., <em>JPGN</em> 60:562-574).</p>
     <p>Built in conjunction with Dr. Julia Fritz, MaineHealth Medical Partners. Originally a Python CS 5001 final project by Patrick Cobb, Northeastern University.</p>
@@ -789,8 +789,8 @@ function closeFeedback() { document.getElementById('feedbackOverlay').classList.
 function sendFeedback() {
   const text = document.getElementById('feedbackText').value.trim();
   if (!text) { alert('Please enter some feedback first.'); return; }
-  const subject = 'Hippocketease Feedback (Testing Build 0.1)';
-  const body = text + '\n\n---\nSent from Hippocketease Testing Build 0.1\nDate: ' + new Date().toISOString();
+  const subject = 'HipPocketEASE Feedback (Testing Build 0.1)';
+  const body = text + '\n\n---\nSent from HipPocketEASE Testing Build 0.1\nDate: ' + new Date().toISOString();
   // Opens the user's email client. No data transmitted anywhere else.
   const mailto = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
   window.location.href = mailto;
