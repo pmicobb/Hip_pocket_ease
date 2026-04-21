@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Hippocketease — Pediatric FB Triage (Testing Build)</title>
+
+<!-- Content Security Policy: blocks any unexpected resource load.
+     Allows only inline styles/scripts from this file (needed for single-file PWA)
+     and same-origin resources. No external scripts, no CDNs, no third-party frames. -->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self' 'unsafe-inline';
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data:;
+               font-src 'self';
+               connect-src 'self';
+               frame-ancestors 'none';
+               base-uri 'self';
+               form-action 'none';
+               object-src 'none';">
+
+<!-- Other security headers (best-effort via meta; real headers should also be set on the host) -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="no-referrer">
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0c4a6e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hippocketease">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+  body { display: flex; justify-content: center; min-height: 100vh; }
+  .phone {
+    width: 100%;
+    max-width: 440px;
+    min-height: 100vh;
+    background: #fff;
+    box-shadow: 0 0 40px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* Testing-build banner */
+  .test-banner {
+    background: #fde68a;
+    color: #78350f;
+    text-align: center;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #0c4a6e 100%);
+    color: #fff;
+    padding: 20px 20px 18px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  header h1::after {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #38bdf8;
+    margin-top: -10px;
+  }
+  header .sub {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2px;
+  }
+  header p { font-size: 12px; opacity: 0.75; }
+  .menu-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  .progress-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #38bdf8;
+    transition: width 0.3s ease;
+    border-radius: 2px;
+  }
+
+  main { flex: 1; padding: 24px 20px 120px; overflow-y: auto; }
+  .step-title { font-size: 20px; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.3px; }
+  .step-hint { font-size: 14px; color: #64748b; margin-bottom: 20px; line-height: 1.5; }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+    font-family: inherit;
+    font-size: 15px;
+    color: #0f172a;
+    width: 100%;
+  }
+  .option:active { transform: scale(0.98); }
+  .option.selected { border-color: #0c4a6e; background: #eff6ff; }
+  .option .icon {
+    font-size: 24px;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border-radius: 8px;
+  }
+  .option.selected .icon { background: #dbeafe; }
+  .option .label { font-weight: 500; flex: 1; }
+  .option .sublabel {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+    font-weight: 400;
+  }
+
+  .date-row { display: flex; gap: 8px; margin-top: 8px; }
+  .date-row input {
+    flex: 1;
+    padding: 14px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: inherit;
+    text-align: center;
+    min-width: 0;
+  }
+  .date-row input:focus { outline: none; border-color: #0c4a6e; }
+  .date-row input.invalid { border-color: #dc2626; background: #fef2f2; }
+  .size-input {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 18px;
+    font-family: inherit;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .size-input:focus { outline: none; border-color: #0c4a6e; }
+  .size-input.invalid { border-color: #dc2626; background: #fef2f2; }
+
+  .validation-error {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #fef2f2;
+    border-left: 3px solid #dc2626;
+    border-radius: 6px;
+    color: #991b1b;
+    font-size: 13px;
+  }
+
+  footer {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 440px;
+    padding: 12px 20px 20px;
+    background: linear-gradient(to top, #fff 70%, rgba(255,255,255,0));
+    display: flex;
+    gap: 10px;
+  }
+  button.nav {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  button.nav:active { transform: scale(0.98); }
+  .btn-back { background: #f1f5f9; color: #475569; flex: 0 0 90px; }
+  .btn-next { background: #0c4a6e; color: #fff; }
+  .btn-next:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+  .result-card { border-radius: 14px; padding: 20px; margin-bottom: 16px; border: 2px solid; }
+  .result-card.emergent { background: #fef2f2; border-color: #dc2626; color: #7f1d1d; }
+  .result-card.urgent { background: #fff7ed; border-color: #ea580c; color: #7c2d12; }
+  .result-card.elective { background: #f0fdf4; border-color: #16a34a; color: #14532d; }
+  .result-card .urgency {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .result-card h2 { font-size: 18px; margin-bottom: 10px; line-height: 1.3; }
+  .result-card ul { list-style: none; padding: 0; }
+  .result-card li {
+    padding: 6px 0 6px 18px;
+    position: relative;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .result-card li::before { content: "→"; position: absolute; left: 0; font-weight: bold; }
+  .summary-box {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.6;
+  }
+  .summary-box strong { color: #0f172a; }
+  .disclaimer {
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #78350f;
+    margin-top: 20px;
+  }
+  .restart-btn {
+    width: 100%;
+    padding: 15px;
+    background: #0c4a6e;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .feedback-btn {
+    width: 100%;
+    padding: 12px;
+    background: #f1f5f9;
+    color: #0c4a6e;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  /* Full-screen overlays (disclaimer gate, PIN lock, menu, history, feedback) */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  .overlay.visible { display: flex; }
+  .overlay.centered { align-items: center; }
+  .sheet {
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    padding: 24px 20px max(24px, env(safe-area-inset-bottom, 24px));
+    width: 100%;
+    max-width: 440px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .overlay.centered .sheet { border-radius: 16px; }
+  .sheet h2 { font-size: 18px; margin-bottom: 10px; }
+  .sheet p { font-size: 14px; line-height: 1.6; color: #475569; margin-bottom: 12px; }
+  .sheet .actions { display: flex; gap: 8px; margin-top: 16px; }
+  .sheet .actions button {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-primary { background: #0c4a6e; color: #fff; }
+  .btn-secondary { background: #f1f5f9; color: #475569; }
+  .btn-danger { background: #fef2f2; color: #991b1b; }
+
+  .checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-top: 16px;
+    cursor: pointer;
+  }
+  .checkbox-row input { margin-top: 3px; flex-shrink: 0; }
+  .checkbox-row label { font-size: 13px; line-height: 1.5; flex: 1; }
+
+  /* PIN pad */
+  .pin-display {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  .pin-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    background: transparent;
+  }
+  .pin-dot.filled { background: #0c4a6e; border-color: #0c4a6e; }
+  .pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  .pin-pad button {
+    padding: 16px;
+    font-size: 20px;
+    font-weight: 500;
+    border: none;
+    border-radius: 12px;
+    background: #f1f5f9;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .pin-pad button:active { background: #e2e8f0; }
+  .pin-pad button.empty { visibility: hidden; }
+  .pin-error { color: #dc2626; text-align: center; font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+  /* History list */
+  .history-item {
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .history-item .time { color: #64748b; font-size: 11px; margin-bottom: 4px; }
+  .history-item .urg { font-weight: 600; }
+  .history-item .urg.emergent { color: #dc2626; }
+  .history-item .urg.urgent { color: #ea580c; }
+  .history-item .urg.elective { color: #16a34a; }
+
+  /* Menu list */
+  .menu-item {
+    width: 100%;
+    padding: 14px;
+    background: #f8fafc;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    margin-bottom: 8px;
+    color: #0f172a;
+  }
+  .menu-item .emoji { margin-right: 10px; }
+
+  /* Feedback textarea */
+  .feedback-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    min-height: 120px;
+    resize: vertical;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="test-banner">⚗️ TESTING BUILD — NOT FOR CLINICAL USE</div>
+
+  <header>
+    <h1>Hippocketease</h1>
+    <div class="sub">
+      <p>Pediatric FB triage — decision support</p>
+      <button class="menu-btn" onclick="openMenu()" aria-label="Menu">☰</button>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+  </header>
+
+  <main id="main"></main>
+
+  <footer id="footer">
+    <button class="nav btn-back" id="backBtn" onclick="back()">Back</button>
+    <button class="nav btn-next" id="nextBtn" onclick="next()" disabled>Next</button>
+  </footer>
+</div>
+
+<!-- Disclaimer gate (shown on first launch, must acknowledge) -->
+<div class="overlay centered" id="disclaimerOverlay">
+  <div class="sheet">
+    <h2>⚠️ Before you begin</h2>
+    <p><strong>This is a testing build.</strong> Hippocketease is a decision-support tool based on the 2015 NASPGHAN pediatric foreign body ingestion algorithms (Kramer et al.).</p>
+    <p>This tool is <strong>not a substitute</strong> for clinical judgment, institutional protocols, or direct consultation with Pediatric Gastroenterology. It does not establish a legal standard of care. You remain fully responsible for all clinical decisions.</p>
+    <p>No patient data entered here is transmitted or stored off this device. Session history is kept locally on this device only and can be cleared at any time from the menu.</p>
+    <div class="checkbox-row" onclick="toggleCheckbox()">
+      <input type="checkbox" id="ackCheck">
+      <label for="ackCheck">I understand this is decision support only, intended for front-line providers, and I accept responsibility for my own clinical decisions.</label>
+    </div>
+    <div class="actions">
+      <button class="btn-primary" id="ackBtn" onclick="acceptDisclaimer()" disabled>I Understand — Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN lock (optional, shown if PIN is set) -->
+<div class="overlay centered" id="pinOverlay">
+  <div class="sheet">
+    <h2 id="pinTitle">Enter PIN</h2>
+    <p id="pinSubtitle">Enter your 4-digit PIN to unlock Hippocketease.</p>
+    <div class="pin-display" id="pinDisplay"></div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="pin-pad" id="pinPad"></div>
+    <div class="actions">
+      <button class="btn-secondary" id="pinCancelBtn" onclick="cancelPin()" style="display:none;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Menu overlay -->
+<div class="overlay" id="menuOverlay" onclick="if(event.target===this)closeMenu()">
+  <div class="sheet">
+    <h2>Menu</h2>
+    <button class="menu-item" onclick="showHistory()"><span class="emoji">📋</span>Assessment history</button>
+    <button class="menu-item" onclick="showFeedback()"><span class="emoji">💬</span>Send feedback to developer</button>
+    <button class="menu-item" id="pinMenuItem" onclick="managePin()"><span class="emoji">🔒</span>Set / change PIN</button>
+    <button class="menu-item" onclick="showAbout()"><span class="emoji">ℹ️</span>About Hippocketease</button>
+    <button class="menu-item" onclick="closeMenu()" style="background:#f1f5f9;text-align:center;margin-top:12px;"><strong>Close</strong></button>
+  </div>
+</div>
+
+<!-- History overlay -->
+<div class="overlay" id="historyOverlay" onclick="if(event.target===this)closeHistory()">
+  <div class="sheet">
+    <h2>Recent assessments</h2>
+    <p style="font-size:12px;">Last 10 assessments on this device. Not shared with anyone.</p>
+    <div id="historyList"></div>
+    <div class="actions">
+      <button class="btn-secondary" onclick="closeHistory()">Close</button>
+      <button class="btn-danger" onclick="clearHistory()">Clear All</button>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback overlay -->
+<div class="overlay" id="feedbackOverlay" onclick="if(event.target===this)closeFeedback()">
+  <div class="sheet">
+    <h2>Send feedback</h2>
+    <p>Help improve Hippocketease. Your feedback stays on this device until you choose to send it by email.</p>
+    <textarea class="feedback-textarea" id="feedbackText" placeholder="What worked? What didn't? Any incorrect recommendations? Ideas for improvement?"></textarea>
+    <div class="actions">
+      <button class="btn-secondary" onclick="closeFeedback()">Cancel</button>
+      <button class="btn-primary" onclick="sendFeedback()">Open in Email</button>
+    </div>
+  </div>
+</div>
+
+<!-- About overlay -->
+<div class="overlay" id="aboutOverlay" onclick="if(event.target===this)closeAbout()">
+  <div class="sheet">
+    <h2>About Hippocketease</h2>
+    <p><strong>Version:</strong> Testing Build 0.1</p>
+    <p>A pediatric foreign body ingestion triage aid based on the 2015 NASPGHAN algorithms (Kramer et al., <em>JPGN</em> 60:562-574).</p>
+    <p>Built in conjunction with Dr. Julia Fritz, MaineHealth Medical Partners. Originally a Python CS 5001 final project by Patrick Cobb, Northeastern University.</p>
+    <p style="font-size:11px;color:#64748b;margin-top:20px;">Kramer RE, Lerner DG, Lin T, et al. Management of Ingested Foreign Bodies in Children: A Clinical Report of the NASPGHAN Endoscopy Committee. J Pediatr Gastroenterol Nutr. 2015;60(4):562-574.</p>
+    <div class="actions">
+      <button class="btn-primary" onclick="closeAbout()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ---------- IN-MEMORY STATE ----------
+const state = {
+  step: 0,
+  data: resetData(),
+  ackedDisclaimer: false,
+  pinHash: null,         // Stored locally only. See note in managePin().
+  pinUnlocked: false,
+  history: [],           // Last 10 completed assessments (local only)
+  pinMode: 'unlock'      // 'unlock' | 'set-new-1' | 'set-new-2' | 'verify-old'
+};
+function resetData() {
+  return {
+    birth: { m: null, d: null, y: null },
+    ageYears: null,
+    fbType: null,
+    bbSize: null,
+    radioOpaque: null,
+    numMagnets: null,
+    location: null,
+    symptoms: null,
+    patientCondition: null,
+    evidenceOfFb: null,
+    timeElapsed: null,
+    secretionsTolerance: null
+  };
+}
+
+// ---------- LOCAL STORAGE (same device only) ----------
+// We store only three things: disclaimer ack, PIN hash, history.
+// No patient-identifying data. Entire store can be cleared from menu.
+const STORE_KEYS = { ACK: 'hpe.ack', PIN: 'hpe.pin', HIST: 'hpe.hist' };
+
+function loadPersistent() {
+  try {
+    state.ackedDisclaimer = localStorage.getItem(STORE_KEYS.ACK) === '1';
+    state.pinHash = localStorage.getItem(STORE_KEYS.PIN) || null;
+    const h = localStorage.getItem(STORE_KEYS.HIST);
+    state.history = h ? JSON.parse(h) : [];
+    if (!Array.isArray(state.history)) state.history = [];
+  } catch (e) {
+    // If localStorage is unavailable (private browsing), fall back to session-only
+    state.ackedDisclaimer = false;
+    state.pinHash = null;
+    state.history = [];
+  }
+}
+function savePersistent() {
+  try {
+    if (state.ackedDisclaimer) localStorage.setItem(STORE_KEYS.ACK, '1');
+    if (state.pinHash) localStorage.setItem(STORE_KEYS.PIN, state.pinHash);
+    else localStorage.removeItem(STORE_KEYS.PIN);
+    localStorage.setItem(STORE_KEYS.HIST, JSON.stringify(state.history));
+  } catch (e) { /* private browsing — silently ignore */ }
+}
+
+// Simple hash for PIN (SHA-256). Note: a 4-digit PIN has only 10,000 combinations
+// so this is a UX convenience, not strong crypto. Document clearly in About.
+async function hashPin(pin) {
+  const buf = new TextEncoder().encode('hpe-salt-v1:' + pin);
+  const digest = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// ---------- DISCLAIMER GATE ----------
+function toggleCheckbox() {
+  const cb = document.getElementById('ackCheck');
+  cb.checked = !cb.checked;
+  document.getElementById('ackBtn').disabled = !cb.checked;
+}
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.id === 'ackCheck') {
+    document.getElementById('ackBtn').disabled = !e.target.checked;
+  }
+});
+function acceptDisclaimer() {
+  state.ackedDisclaimer = true;
+  savePersistent();
+  document.getElementById('disclaimerOverlay').classList.remove('visible');
+  maybePromptPin();
+}
+window.acceptDisclaimer = acceptDisclaimer;
+window.toggleCheckbox = toggleCheckbox;
+
+// ---------- PIN LOCK ----------
+let pinBuffer = '';
+function renderPinDots() {
+  const d = document.getElementById('pinDisplay');
+  d.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+    d.appendChild(dot);
+  }
+}
+function renderPinPad() {
+  const pad = document.getElementById('pinPad');
+  pad.innerHTML = '';
+  for (let i = 1; i <= 9; i++) {
+    pad.appendChild(pinKey(i));
+  }
+  const empty = document.createElement('button');
+  empty.className = 'empty';
+  pad.appendChild(empty);
+  pad.appendChild(pinKey(0));
+  pad.appendChild(pinKey('←'));
+}
+function pinKey(label) {
+  const btn = document.createElement('button');
+  btn.textContent = label;
+  btn.type = 'button';
+  btn.addEventListener('click', () => onPinKey(label));
+  return btn;
+}
+async function onPinKey(k) {
+  if (k === '←') { pinBuffer = pinBuffer.slice(0, -1); renderPinDots(); return; }
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += String(k);
+  renderPinDots();
+  if (pinBuffer.length === 4) {
+    await processPinEntry(pinBuffer);
+    pinBuffer = '';
+    renderPinDots();
+  }
+}
+async function processPinEntry(pin) {
+  const err = document.getElementById('pinError');
+  err.textContent = '';
+
+  if (state.pinMode === 'unlock') {
+    const h = await hashPin(pin);
+    if (h === state.pinHash) {
+      state.pinUnlocked = true;
+      document.getElementById('pinOverlay').classList.remove('visible');
+    } else {
+      err.textContent = 'Incorrect PIN';
+    }
+  } else if (state.pinMode === 'verify-old') {
+    const h = await hashPin(pin);
+    if (h === state.pinHash) {
+      state.pinMode = 'set-new-1';
+      document.getElementById('pinTitle').textContent = 'New PIN';
+      document.getElementById('pinSubtitle').textContent = 'Choose a new 4-digit PIN.';
+    } else {
+      err.textContent = 'Incorrect current PIN';
+    }
+  } else if (state.pinMode === 'set-new-1') {
+    state._pendingPin = pin;
+    state.pinMode = 'set-new-2';
+    document.getElementById('pinTitle').textContent = 'Confirm PIN';
+    document.getElementById('pinSubtitle').textContent = 'Enter the same PIN again.';
+  } else if (state.pinMode === 'set-new-2') {
+    if (pin === state._pendingPin) {
+      state.pinHash = await hashPin(pin);
+      state._pendingPin = null;
+      savePersistent();
+      document.getElementById('pinOverlay').classList.remove('visible');
+      alert('PIN set successfully.');
+    } else {
+      err.textContent = 'PINs did not match. Try again.';
+      state.pinMode = 'set-new-1';
+      document.getElementById('pinTitle').textContent = 'New PIN';
+      document.getElementById('pinSubtitle').textContent = 'Choose a new 4-digit PIN.';
+    }
+  }
+}
+function maybePromptPin() {
+  if (state.pinHash && !state.pinUnlocked) {
+    state.pinMode = 'unlock';
+    pinBuffer = '';
+    document.getElementById('pinTitle').textContent = 'Enter PIN';
+    document.getElementById('pinSubtitle').textContent = 'Enter your 4-digit PIN to unlock.';
+    document.getElementById('pinCancelBtn').style.display = 'none';
+    document.getElementById('pinOverlay').classList.add('visible');
+    renderPinDots();
+    renderPinPad();
+  }
+}
+function managePin() {
+  closeMenu();
+  pinBuffer = '';
+  if (state.pinHash) {
+    state.pinMode = 'verify-old';
+    document.getElementById('pinTitle').textContent = 'Change PIN';
+    document.getElementById('pinSubtitle').textContent = 'Enter your current PIN first.';
+  } else {
+    state.pinMode = 'set-new-1';
+    document.getElementById('pinTitle').textContent = 'Set PIN';
+    document.getElementById('pinSubtitle').textContent = 'Choose a 4-digit PIN. Used only on this device.';
+  }
+  document.getElementById('pinCancelBtn').style.display = 'block';
+  document.getElementById('pinOverlay').classList.add('visible');
+  renderPinDots();
+  renderPinPad();
+}
+function cancelPin() {
+  document.getElementById('pinOverlay').classList.remove('visible');
+  pinBuffer = '';
+}
+window.managePin = managePin;
+window.cancelPin = cancelPin;
+
+// ---------- HISTORY ----------
+function addToHistory(summary) {
+  state.history.unshift({ ts: Date.now(), ...summary });
+  if (state.history.length > 10) state.history.length = 10;
+  savePersistent();
+}
+function showHistory() {
+  closeMenu();
+  const list = document.getElementById('historyList');
+  if (state.history.length === 0) {
+    list.innerHTML = '<p style="text-align:center;color:#64748b;padding:30px 0;">No assessments yet.</p>';
+  } else {
+    list.innerHTML = state.history.map(h => `
+      <div class="history-item">
+        <div class="time">${new Date(h.ts).toLocaleString()}</div>
+        <div><strong>${escapeHtml(h.fb)}</strong> — ${escapeHtml(h.loc)}</div>
+        <div class="urg ${h.urgency}">${escapeHtml(h.title)}</div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('historyOverlay').classList.add('visible');
+}
+function closeHistory() { document.getElementById('historyOverlay').classList.remove('visible'); }
+function clearHistory() {
+  if (!confirm('Clear all local assessment history?')) return;
+  state.history = [];
+  savePersistent();
+  showHistory(); // re-render empty
+}
+window.showHistory = showHistory;
+window.closeHistory = closeHistory;
+window.clearHistory = clearHistory;
+
+// ---------- MENU ----------
+function openMenu() {
+  document.getElementById('pinMenuItem').innerHTML =
+    state.pinHash ? '<span class="emoji">🔒</span>Change / remove PIN' : '<span class="emoji">🔒</span>Set PIN';
+  document.getElementById('menuOverlay').classList.add('visible');
+}
+function closeMenu() { document.getElementById('menuOverlay').classList.remove('visible'); }
+window.openMenu = openMenu;
+window.closeMenu = closeMenu;
+
+// ---------- FEEDBACK ----------
+function showFeedback() {
+  closeMenu();
+  document.getElementById('feedbackText').value = '';
+  document.getElementById('feedbackOverlay').classList.add('visible');
+}
+function closeFeedback() { document.getElementById('feedbackOverlay').classList.remove('visible'); }
+function sendFeedback() {
+  const text = document.getElementById('feedbackText').value.trim();
+  if (!text) { alert('Please enter some feedback first.'); return; }
+  const subject = 'Hippocketease Feedback (Testing Build 0.1)';
+  const body = text + '\n\n---\nSent from Hippocketease Testing Build 0.1\nDate: ' + new Date().toISOString();
+  // Opens the user's email client. No data transmitted anywhere else.
+  const mailto = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  window.location.href = mailto;
+  closeFeedback();
+}
+window.showFeedback = showFeedback;
+window.closeFeedback = closeFeedback;
+window.sendFeedback = sendFeedback;
+
+// ---------- ABOUT ----------
+function showAbout() { closeMenu(); document.getElementById('aboutOverlay').classList.add('visible'); }
+function closeAbout() { document.getElementById('aboutOverlay').classList.remove('visible'); }
+window.showAbout = showAbout;
+window.closeAbout = closeAbout;
+
+// ---------- HELPERS ----------
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
+// ---------- STEP DEFINITIONS (unchanged flow from previous build) ----------
+const steps = [
+  { key: 'birth',      render: renderBirth,         validate: validateBirth },
+  { key: 'fbType',     render: renderFbType,        validate: () => state.data.fbType !== null },
+  { key: 'fbDetail',   render: renderFbDetail,      validate: validateFbDetail,
+      skipIf: () => ![1,2,3].includes(state.data.fbType) },
+  { key: 'location',   render: renderLocation,      validate: () => state.data.location !== null,
+      skipIf: () => state.data.fbType === 4 },
+  { key: 'symptoms',   render: renderSymptoms,      validate: () => state.data.symptoms !== null,
+      skipIf: () => state.data.fbType === 4 },
+  { key: 'bbCond',     render: renderBbCondition,   validate: () => state.data.patientCondition !== null,
+      skipIf: () => !(state.data.fbType === 1 && state.data.location === 1) },
+  { key: 'sharpEvid',  render: renderSharpEvidence, validate: () => state.data.evidenceOfFb !== null,
+      skipIf: () => !(state.data.fbType === 2 && state.data.radioOpaque === 1 && state.data.symptoms === 2) },
+  { key: 'magTime',    render: renderMagnetTime,    validate: () => state.data.timeElapsed !== null,
+      skipIf: () => !(state.data.fbType === 3 && state.data.numMagnets === 2 &&
+                      (state.data.location === 1 || state.data.location === 2)) },
+  { key: 'secretions', render: renderSecretions,    validate: () => state.data.secretionsTolerance !== null,
+      skipIf: () => state.data.fbType !== 4 },
+  { key: 'results',    render: renderResults,       validate: () => true }
+];
+
+// ---------- STRICT DOB VALIDATION ----------
+function validateBirthDetails() {
+  const { m, d, y } = state.data.birth;
+  if (!m || !d || !y) return { valid: false, reason: null };
+
+  // Range checks
+  if (m < 1 || m > 12) return { valid: false, reason: 'Month must be between 1 and 12.' };
+  if (d < 1 || d > 31) return { valid: false, reason: 'Day must be between 1 and 31.' };
+  const currentYear = new Date().getFullYear();
+  if (y < currentYear - 25) return { valid: false, reason: `This tool is for pediatric patients. Year must be ${currentYear - 25} or later.` };
+  if (y > currentYear) return { valid: false, reason: 'Birth year cannot be in the future.' };
+
+  // Real calendar date check (catches Feb 30, etc.)
+  const date = new Date(y, m - 1, d);
+  if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
+    return { valid: false, reason: 'That date does not exist on the calendar.' };
+  }
+  const now = new Date();
+  if (date > now) return { valid: false, reason: 'Birth date cannot be in the future.' };
+
+  const yrs = calcAgeYears(m, d, y);
+  if (yrs > 21) return { valid: false, reason: 'This tool is for pediatric patients (≤21 years).' };
+
+  return { valid: true, reason: null };
+}
+function validateBirth() { return validateBirthDetails().valid; }
+function calcAgeYears(m, d, y) {
+  if (!m || !d || !y) return null;
+  const birth = new Date(y, m - 1, d);
+  const now = new Date();
+  if (birth > now) return null;
+  let age = now.getFullYear() - y;
+  if (now.getMonth() < m - 1 || (now.getMonth() === m - 1 && now.getDate() < d)) age--;
+  return age;
+}
+
+// ---------- RENDERERS ----------
+function renderBirth() {
+  return `
+    <div class="step-title">Patient date of birth</div>
+    <div class="step-hint">Used to calculate age. Age is a key factor in the button battery algorithm (&lt;5 years is higher risk).</div>
+    <div class="date-row">
+      <input type="number" id="bm" placeholder="MM" min="1" max="12" inputmode="numeric" autocomplete="off" value="${state.data.birth.m ?? ''}">
+      <input type="number" id="bd" placeholder="DD" min="1" max="31" inputmode="numeric" autocomplete="off" value="${state.data.birth.d ?? ''}">
+      <input type="number" id="by" placeholder="YYYY" min="1900" max="2030" inputmode="numeric" autocomplete="off" value="${state.data.birth.y ?? ''}">
+    </div>
+    <div id="ageDisplay" style="margin-top:12px;font-size:13px;color:#64748b;"></div>
+    <div id="dobError"></div>
+  `;
+}
+function wireBirth() {
+  ['bm','bd','by'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      state.data.birth.m = parseInt(document.getElementById('bm').value) || null;
+      state.data.birth.d = parseInt(document.getElementById('bd').value) || null;
+      state.data.birth.y = parseInt(document.getElementById('by').value) || null;
+      updateAgeDisplay();
+      updateNext();
+    });
+  });
+}
+function updateAgeDisplay() {
+  const { m, d, y } = state.data.birth;
+  const el = document.getElementById('ageDisplay');
+  const err = document.getElementById('dobError');
+  if (!el || !err) return;
+
+  const yrs = calcAgeYears(m, d, y);
+  state.data.ageYears = yrs;
+
+  const validation = validateBirthDetails();
+  // Mark fields
+  ['bm','bd','by'].forEach(id => {
+    const f = document.getElementById(id);
+    if (f) f.classList.toggle('invalid', !!validation.reason && !!f.value);
+  });
+
+  if (validation.reason) {
+    el.textContent = '';
+    err.innerHTML = `<div class="validation-error">${escapeHtml(validation.reason)}</div>`;
+  } else if (yrs !== null && yrs >= 0) {
+    err.innerHTML = '';
+    el.innerHTML = `<strong style="color:#0f172a;">Age:</strong> ${yrs} year${yrs !== 1 ? 's' : ''} old`;
+  } else {
+    el.textContent = '';
+    err.innerHTML = '';
+  }
+}
+
+function renderFbType() {
+  const opts = [
+    { v: 1, icon: '🔋', label: 'Button battery',   sub: 'Disc / coin cell battery' },
+    { v: 2, icon: '📍', label: 'Sharp object',     sub: 'Pin, needle, nail, bone, toothpick' },
+    { v: 3, icon: '🧲', label: 'Magnet',           sub: 'Single or multiple; rare-earth' },
+    { v: 4, icon: '🍖', label: 'Food impaction',   sub: 'Esophageal food bolus' },
+    { v: 5, icon: '🪙', label: 'Coin',             sub: 'Or similar blunt object' }
+  ];
+  return `
+    <div class="step-title">Foreign body type</div>
+    <div class="step-hint">What was ingested?</div>
+    <div class="options">
+      ${opts.map(o => `
+        <button class="option ${state.data.fbType === o.v ? 'selected' : ''}" data-v="${o.v}">
+          <div class="icon">${o.icon}</div>
+          <div class="label">${escapeHtml(o.label)}<span class="sublabel">${escapeHtml(o.sub)}</span></div>
+        </button>
+      `).join('')}
+    </div>
+  `;
+}
+function wireFbType() {
+  document.querySelectorAll('[data-v]').forEach(b => {
+    b.addEventListener('click', () => {
+      state.data.fbType = parseInt(b.dataset.v);
+      Object.assign(state.data, {
+        bbSize: null, radioOpaque: null, numMagnets: null,
+        patientCondition: null, evidenceOfFb: null, timeElapsed: null, secretionsTolerance: null
+      });
+      render();
+    });
+  });
+}
+
+function renderFbDetail() {
+  if (state.data.fbType === 1) {
+    return `
+      <div class="step-title">Button battery size</div>
+      <div class="step-hint">Diameter in millimeters (typically 5–25). The algorithm uses the ≥20 mm threshold (combined with age &lt;5) to escalate urgency.</div>
+      <input class="size-input" type="number" id="bbSizeInput" placeholder="Size in mm" min="1" max="40" inputmode="numeric" value="${state.data.bbSize ?? ''}">
+      <div id="bbHint" style="margin-top:10px;font-size:12px;color:#64748b;"></div>
+      <div id="bbError"></div>
+    `;
+  }
+  if (state.data.fbType === 2) {
+    return `
+      <div class="step-title">Radiographic appearance</div>
+      <div class="step-hint">Is the object radiolucent (not visible on x-ray) or radio-opaque (visible)?</div>
+      <div class="options">
+        <button class="option ${state.data.radioOpaque === 1 ? 'selected' : ''}" data-ro="1">
+          <div class="icon">👻</div>
+          <div class="label">Radiolucent<span class="sublabel">Wood, plastic, some glass, fish bone</span></div>
+        </button>
+        <button class="option ${state.data.radioOpaque === 2 ? 'selected' : ''}" data-ro="2">
+          <div class="icon">📷</div>
+          <div class="label">Radio-opaque<span class="sublabel">Metal — visible on x-ray</span></div>
+        </button>
+      </div>
+    `;
+  }
+  if (state.data.fbType === 3) {
+    return `
+      <div class="step-title">Number of magnets</div>
+      <div class="step-hint">Multiple magnets — or a single magnet plus a metallic object — can attract across bowel walls and cause perforation.</div>
+      <div class="options">
+        <button class="option ${state.data.numMagnets === 1 ? 'selected' : ''}" data-nm="1">
+          <div class="icon">🧲</div>
+          <div class="label">Single magnet<span class="sublabel">No other metal objects</span></div>
+        </button>
+        <button class="option ${state.data.numMagnets === 2 ? 'selected' : ''}" data-nm="2">
+          <div class="icon">🧲🧲</div>
+          <div class="label">Multiple magnets<span class="sublabel">Or magnet + metallic object</span></div>
+        </button>
+      </div>
+    `;
+  }
+  return '';
+}
+function wireFbDetail() {
+  const sizeInput = document.getElementById('bbSizeInput');
+  if (sizeInput) {
+    const updateHint = () => {
+      const raw = sizeInput.value;
+      const v = parseInt(raw);
+      const hint = document.getElementById('bbHint');
+      const err = document.getElementById('bbError');
+      sizeInput.classList.remove('invalid');
+      err.innerHTML = '';
+      if (raw === '') {
+        state.data.bbSize = null;
+        hint.textContent = '';
+      } else if (isNaN(v) || v <= 0) {
+        state.data.bbSize = null;
+        hint.textContent = '';
+        sizeInput.classList.add('invalid');
+        err.innerHTML = '<div class="validation-error">Please enter a positive number.</div>';
+      } else if (v > 40) {
+        state.data.bbSize = null;
+        hint.textContent = '';
+        sizeInput.classList.add('invalid');
+        err.innerHTML = '<div class="validation-error">That size is larger than any known button battery. Please re-check.</div>';
+      } else {
+        state.data.bbSize = v;
+        hint.textContent = v >= 20 ? '⚠️ ≥20 mm — higher impaction risk' : 'ℹ️ <20 mm — lower impaction risk';
+      }
+      updateNext();
+    };
+    sizeInput.addEventListener('input', updateHint);
+    updateHint();
+  }
+  document.querySelectorAll('[data-ro]').forEach(b => b.addEventListener('click', () => { state.data.radioOpaque = parseInt(b.dataset.ro); render(); }));
+  document.querySelectorAll('[data-nm]').forEach(b => b.addEventListener('click', () => { state.data.numMagnets = parseInt(b.dataset.nm); render(); }));
+}
+function validateFbDetail() {
+  if (state.data.fbType === 1) return state.data.bbSize !== null && state.data.bbSize > 0 && state.data.bbSize <= 40;
+  if (state.data.fbType === 2) return state.data.radioOpaque !== null;
+  if (state.data.fbType === 3) return state.data.numMagnets !== null;
+  return true;
+}
+
+function renderLocation() {
+  return `
+    <div class="step-title">Location of foreign body</div>
+    <div class="step-hint">Based on x-ray or clinical assessment.</div>
+    <div class="options">
+      <button class="option ${state.data.location === 1 ? 'selected' : ''}" data-loc="1">
+        <div class="icon">🫁</div>
+        <div class="label">Esophagus<span class="sublabel">Highest urgency for most objects</span></div>
+      </button>
+      <button class="option ${state.data.location === 2 ? 'selected' : ''}" data-loc="2">
+        <div class="icon">🫄</div>
+        <div class="label">Stomach<span class="sublabel">Gastric location</span></div>
+      </button>
+      <button class="option ${state.data.location === 3 ? 'selected' : ''}" data-loc="3">
+        <div class="icon">🌀</div>
+        <div class="label">Beyond the stomach<span class="sublabel">Small bowel or distal</span></div>
+      </button>
+      <button class="option ${state.data.location === 4 ? 'selected' : ''}" data-loc="4">
+        <div class="icon">❓</div>
+        <div class="label">Unknown<span class="sublabel">Not visualized / radiolucent</span></div>
+      </button>
+    </div>
+  `;
+}
+function wireLocation() {
+  document.querySelectorAll('[data-loc]').forEach(b => b.addEventListener('click', () => { state.data.location = parseInt(b.dataset.loc); render(); }));
+}
+
+function renderSymptoms() {
+  return `
+    <div class="step-title">Patient symptoms</div>
+    <div class="step-hint">Drooling, dysphagia, respiratory distress, chest/abdominal pain, vomiting, bleeding.</div>
+    <div class="options">
+      <button class="option ${state.data.symptoms === 1 ? 'selected' : ''}" data-sx="1">
+        <div class="icon">🚨</div>
+        <div class="label">Yes — symptomatic<span class="sublabel">Any concerning symptoms present</span></div>
+      </button>
+      <button class="option ${state.data.symptoms === 2 ? 'selected' : ''}" data-sx="2">
+        <div class="icon">✅</div>
+        <div class="label">No — asymptomatic<span class="sublabel">No concerning symptoms</span></div>
+      </button>
+    </div>
+  `;
+}
+function wireSymptoms() {
+  document.querySelectorAll('[data-sx]').forEach(b => b.addEventListener('click', () => { state.data.symptoms = parseInt(b.dataset.sx); render(); }));
+}
+
+function renderBbCondition() {
+  return `
+    <div class="step-title">Patient clinical condition</div>
+    <div class="step-hint">For esophageal button battery, clinical stability determines whether removal happens at the bedside or in the OR with surgical backup.</div>
+    <div class="options">
+      <button class="option ${state.data.patientCondition === 1 ? 'selected' : ''}" data-pc="1">
+        <div class="icon">✅</div>
+        <div class="label">Stable<span class="sublabel">No active bleeding, hemodynamically stable</span></div>
+      </button>
+      <button class="option ${state.data.patientCondition === 2 ? 'selected' : ''}" data-pc="2">
+        <div class="icon">🆘</div>
+        <div class="label">Bleeding or clinically unstable<span class="sublabel">Requires OR with surgery/CV surgery present</span></div>
+      </button>
+    </div>
+  `;
+}
+function wireBbCondition() {
+  document.querySelectorAll('[data-pc]').forEach(b => b.addEventListener('click', () => { state.data.patientCondition = parseInt(b.dataset.pc); render(); }));
+}
+
+function renderSharpEvidence() {
+  return `
+    <div class="step-title">Foreign body on imaging?</div>
+    <div class="step-hint">After additional imaging (CT, ultrasound, MRI, or esophagram), is there evidence of a foreign body?</div>
+    <div class="options">
+      <button class="option ${state.data.evidenceOfFb === 1 ? 'selected' : ''}" data-ef="1">
+        <div class="icon">✔️</div>
+        <div class="label">Yes — foreign body seen<span class="sublabel">Proceed with removal</span></div>
+      </button>
+      <button class="option ${state.data.evidenceOfFb === 2 ? 'selected' : ''}" data-ef="2">
+        <div class="icon">❌</div>
+        <div class="label">No — no foreign body seen<span class="sublabel">Clinical observation</span></div>
+      </button>
+    </div>
+  `;
+}
+function wireSharpEvidence() {
+  document.querySelectorAll('[data-ef]').forEach(b => b.addEventListener('click', () => { state.data.evidenceOfFb = parseInt(b.dataset.ef); render(); }));
+}
+
+function renderMagnetTime() {
+  return `
+    <div class="step-title">Time since ingestion</div>
+    <div class="step-hint">For multiple magnets in the esophagus or stomach, timing guides whether to proceed with endoscopic removal directly or consult surgery first.</div>
+    <div class="options">
+      <button class="option ${state.data.timeElapsed === 1 ? 'selected' : ''}" data-te="1">
+        <div class="icon">⏱️</div>
+        <div class="label">Less than 12 hours<span class="sublabel">Urgent endoscopic removal</span></div>
+      </button>
+      <button class="option ${state.data.timeElapsed === 2 ? 'selected' : ''}" data-te="2">
+        <div class="icon">⏰</div>
+        <div class="label">More than 12 hours<span class="sublabel">Consult surgery prior to endoscopic removal</span></div>
+      </button>
+    </div>
+  `;
+}
+function wireMagnetTime() {
+  document.querySelectorAll('[data-te]').forEach(b => b.addEventListener('click', () => { state.data.timeElapsed = parseInt(b.dataset.te); render(); }));
+}
+
+function renderSecretions() {
+  return `
+    <div class="step-title">Is patient tolerating secretions?</div>
+    <div class="step-hint">For esophageal food impaction, the key clinical question is airway protection — not general symptoms.</div>
+    <div class="options">
+      <button class="option ${state.data.secretionsTolerance === 1 ? 'selected' : ''}" data-st="1">
+        <div class="icon">✅</div>
+        <div class="label">Yes — tolerating secretions<span class="sublabel">Removal may be delayed up to 24 hours</span></div>
+      </button>
+      <button class="option ${state.data.secretionsTolerance === 2 ? 'selected' : ''}" data-st="2">
+        <div class="icon">🚨</div>
+        <div class="label">No — not tolerating<span class="sublabel">Drooling, unable to swallow saliva</span></div>
+      </button>
+    </div>
+  `;
+}
+function wireSecretions() {
+  document.querySelectorAll('[data-st]').forEach(b => b.addEventListener('click', () => { state.data.secretionsTolerance = parseInt(b.dataset.st); render(); }));
+}
+
+// ---------- ALGORITHMS (identical to tested Python logic) ----------
+function algoButtonBattery(d) {
+  if (d.location === 1) {
+    if (d.patientCondition === 1) return { code: 1, urgency: 'emergent', title: 'Immediate endoscopic removal by trained Pediatric GI',
+      actions: ['Esophageal button battery in a stable patient', 'Remove without delay — do not wait for NPO'] };
+    return { code: 2, urgency: 'emergent', title: 'Immediate endoscopic removal in OR with surgery present',
+      actions: ['Esophageal button battery with bleeding or clinical instability', 'Endoscopic removal in Operating Room', 'Have pediatric surgery and CV surgery present'] };
+  }
+  if (d.location === 2 || d.location === 3) {
+    if (d.bbSize >= 20 && d.ageYears < 5) return { code: 3, urgency: 'urgent', title: 'Endoscopic removal within 24–48 hours',
+      actions: [`Patient is ${d.ageYears} years old with a ${d.bbSize} mm battery — higher risk`, 'Consider endoscopic removal within 24–48 hours', 'Assess for esophageal injury at time of endoscopy'] };
+    if (d.bbSize < 20 || d.ageYears >= 5) return { code: 4, urgency: 'elective', title: 'Outpatient observation with repeat imaging',
+      actions: [`Patient is ${d.ageYears} years old with a ${d.bbSize} mm battery — lower-risk profile`, 'Consider outpatient observation', 'Repeat imaging over the next several days to confirm passage'] };
+  }
+  return fallback();
+}
+function algoSharpObject(d) {
+  if (d.radioOpaque === 1) {
+    if (d.symptoms === 1) return { code: 1, urgency: 'emergent', title: 'Urgent endoscopic removal',
+      actions: ['Symptomatic radiolucent sharp object', 'Urgent endoscopic evaluation and removal'] };
+    if (d.evidenceOfFb === 1) return { code: 2, urgency: 'urgent', title: 'Endoscopic removal',
+      actions: ['Foreign body seen on additional imaging', 'Proceed with endoscopic removal'] };
+    return { code: 3, urgency: 'elective', title: 'Clinical observation with close follow-up',
+      actions: ['No foreign body seen on additional imaging', 'Clinical observation with close follow-up', 'Reassess if patient develops symptoms'] };
+  }
+  if (d.radioOpaque === 2) {
+    if (d.location === 1) return { code: 4, urgency: 'emergent', title: 'Urgent endoscopic removal',
+      actions: ['Radio-opaque sharp object in esophagus', 'High risk of perforation and migration', 'Remove even if patient not fasted'] };
+    if (d.location === 2) return { code: 5, urgency: 'urgent', title: 'Urgent endoscopic removal',
+      actions: ['Radio-opaque sharp object in stomach', 'Urgent endoscopic removal'] };
+    if (d.location === 3) {
+      if (d.symptoms === 1) return { code: 6, urgency: 'urgent', title: 'Enteroscopy or surgical removal',
+        actions: ['Symptomatic radio-opaque sharp object beyond the stomach', 'Enteroscopy or surgical removal'] };
+      return { code: 7, urgency: 'elective', title: 'Monitor for symptoms and passage',
+        actions: ['Asymptomatic radio-opaque sharp object beyond the stomach', 'Monitor for symptoms and passage of object', 'Surgical removal if symptoms develop or >3 days without passage'] };
+    }
+  }
+  return fallback();
+}
+function algoMagnets(d) {
+  if (d.numMagnets === 1) {
+    if (d.location === 1) return { code: 1, urgency: 'emergent', title: 'Urgent endoscopic removal',
+      actions: ['Single magnet in esophagus', 'Urgent endoscopic removal'] };
+    if (d.location === 2) return { code: 2, urgency: 'urgent', title: 'Consider endoscopic removal',
+      actions: ['Single magnet in stomach', 'Consider endoscopic removal based on risk of further magnet or metallic ingestion'] };
+    if (d.location === 3) return { code: 3, urgency: 'elective', title: 'Consult Pediatric GI; serial x-rays',
+      actions: ['Single magnet beyond the stomach', 'Consult Pediatric GI', 'Consider removal if possible', 'Follow patient with serial x-rays as outpatient'] };
+  }
+  if (d.numMagnets === 2) {
+    if (d.location === 1 || d.location === 2) {
+      if (d.timeElapsed === 1) return { code: 4, urgency: 'emergent', title: 'Urgent endoscopic removal',
+        actions: ['Multiple magnets ingested <12 hours ago in esophagus/stomach', 'Endoscopic removal urgently', 'Refer to surgery if removal is unsuccessful'] };
+      if (d.timeElapsed === 2) return { code: 5, urgency: 'emergent', title: 'Consult surgery, then endoscopic removal',
+        actions: ['Multiple magnets ingested >12 hours ago in esophagus/stomach', 'Consult surgery prior to endoscopic removal', 'Endoscopic removal urgently'] };
+    }
+    if (d.location === 3) {
+      if (d.symptoms === 1) return { code: 6, urgency: 'emergent', title: 'Refer to surgery',
+        actions: ['Symptomatic multiple magnets beyond the stomach', 'Refer to surgery'] };
+      if (d.symptoms === 2) return { code: 7, urgency: 'urgent', title: 'Enteroscopy or serial x-rays',
+        actions: ['Asymptomatic multiple magnets beyond the stomach', 'If no obstruction or perforation on x-ray, may remove by enteroscopy', 'If enteroscopy not available, follow with serial x-rays'] };
+    }
+  }
+  return fallback();
+}
+function algoFoodImpaction(d) {
+  if (d.secretionsTolerance === 2) return { code: 1, urgency: 'emergent', title: 'Urgent endoscopic removal',
+    actions: ['Patient not tolerating secretions', 'Urgent endoscopic removal', 'Obtain proximal and distal esophageal biopsies'] };
+  return { code: 2, urgency: 'urgent', title: 'Contrast study, then endoscopic removal',
+    actions: ['Patient tolerating secretions', 'Consider obtaining a contrast study', 'Endoscopic removal based on results of contrast study'] };
+}
+function algoCoin(d) {
+  if (d.location === 1) {
+    if (d.symptoms === 1) return { code: 1, urgency: 'emergent', title: 'Urgent endoscopic removal',
+      actions: ['Symptomatic esophageal coin', 'Urgent endoscopic removal'] };
+    if (d.symptoms === 2) return { code: 2, urgency: 'urgent', title: 'Endoscopic removal within 24 hours',
+      actions: ['Asymptomatic esophageal coin', 'Endoscopic removal within 24 hours'] };
+  }
+  if (d.location === 2) return { code: 3, urgency: 'elective', title: 'No endoscopic removal needed; repeat x-ray at 2 weeks',
+    actions: ['Gastric coin — no endoscopy needed initially', 'Repeat x-ray at 2 weeks', 'If not passed within 2–4 weeks, repeat x-ray immediately before endoscopic removal to confirm coin is still present'] };
+  if (d.location === 3) {
+    if (d.symptoms === 1) return { code: 5, urgency: 'urgent', title: 'Enteroscopy or surgical removal',
+      actions: ['Symptomatic coin beyond the stomach', 'Enteroscopy or surgical removal'] };
+    if (d.symptoms === 2) return { code: 4, urgency: 'elective', title: 'Outpatient observation',
+      actions: ['Asymptomatic coin beyond the stomach', 'Outpatient clinic observation'] };
+  }
+  return fallback();
+}
+function fallback() {
+  return { urgency: 'urgent', title: 'Consult Pediatric GI',
+    actions: ['This combination falls outside the defined algorithm branches.', 'Consult Pediatric Gastroenterology directly.'] };
+}
+function runAlgorithm() {
+  const d = state.data;
+  if (d.fbType === 1) return algoButtonBattery(d);
+  if (d.fbType === 2) return algoSharpObject(d);
+  if (d.fbType === 3) return algoMagnets(d);
+  if (d.fbType === 4) return algoFoodImpaction(d);
+  if (d.fbType === 5) return algoCoin(d);
+  return fallback();
+}
+
+function renderResults() {
+  const d = state.data;
+  const r = runAlgorithm();
+  const fbNames = { 1: 'Button battery', 2: 'Sharp object', 3: 'Magnet', 4: 'Food impaction', 5: 'Coin' };
+  const locNames = { 1: 'Esophagus', 2: 'Stomach', 3: 'Beyond stomach', 4: 'Unknown' };
+  let detail = '';
+  if (d.fbType === 1) detail = `<br><strong>Battery size:</strong> ${d.bbSize} mm`;
+  if (d.fbType === 2) detail = `<br><strong>Appearance:</strong> ${d.radioOpaque === 1 ? 'Radiolucent' : 'Radio-opaque'}`;
+  if (d.fbType === 3) detail = `<br><strong>Magnets:</strong> ${d.numMagnets === 1 ? 'Single' : 'Multiple (or magnet + metal)'}`;
+  const locationLine = d.fbType !== 4 ? `<br><strong>Location:</strong> ${locNames[d.location]}` : '';
+  const sxLine = d.fbType === 4
+    ? `<br><strong>Secretions:</strong> ${d.secretionsTolerance === 1 ? 'Tolerating' : 'Not tolerating'}`
+    : `<br><strong>Symptoms:</strong> ${d.symptoms === 1 ? 'Present' : 'None reported'}`;
+  const urgencyLabel = { emergent: '🚨 EMERGENT', urgent: '⚠️ URGENT', elective: '✓ ELECTIVE' }[r.urgency];
+
+  // Record in local history (non-identifying summary only)
+  if (!state._historyAdded) {
+    addToHistory({
+      fb: fbNames[d.fbType],
+      loc: d.fbType === 4 ? 'n/a' : locNames[d.location],
+      urgency: r.urgency,
+      title: r.title
+    });
+    state._historyAdded = true;
+  }
+
+  return `
+    <div class="step-title">Recommended Action</div>
+    <div class="summary-box">
+      <strong>Patient:</strong> ${d.ageYears} year${d.ageYears !== 1 ? 's' : ''} old<br>
+      <strong>Ingested:</strong> ${escapeHtml(fbNames[d.fbType])}${detail}${locationLine}${sxLine}
+    </div>
+    <div class="result-card ${r.urgency}">
+      <div class="urgency">${urgencyLabel}</div>
+      <h2>${escapeHtml(r.title)}</h2>
+      <ul>${r.actions.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul>
+    </div>
+    <div class="disclaimer">
+      <strong>⚠️ Decision support only.</strong> Based on NASPGHAN 2015 algorithms (Kramer et al.). Not a substitute for clinical judgment or direct consultation with Pediatric Gastroenterology. These guidelines do not establish a legal standard of care.
+    </div>
+    <button class="restart-btn" onclick="restart()">Start New Assessment</button>
+    <button class="feedback-btn" onclick="showFeedback()">💬 Send feedback about this result</button>
+  `;
+}
+
+// ---------- NAVIGATION ----------
+function currentStep() {
+  while (steps[state.step] && steps[state.step].skipIf && steps[state.step].skipIf()) {
+    state.step++;
+  }
+  return steps[state.step];
+}
+function render() {
+  const step = currentStep();
+  document.getElementById('main').innerHTML = step.render();
+  document.getElementById('progress').style.width = `${(state.step / (steps.length - 1)) * 100}%`;
+  document.getElementById('backBtn').style.visibility = state.step > 0 ? 'visible' : 'hidden';
+  document.getElementById('footer').style.display = step.key === 'results' ? 'none' : 'flex';
+  if (step.key === 'birth')      { wireBirth(); updateAgeDisplay(); }
+  if (step.key === 'fbType')     wireFbType();
+  if (step.key === 'fbDetail')   wireFbDetail();
+  if (step.key === 'location')   wireLocation();
+  if (step.key === 'symptoms')   wireSymptoms();
+  if (step.key === 'bbCond')     wireBbCondition();
+  if (step.key === 'sharpEvid')  wireSharpEvidence();
+  if (step.key === 'magTime')    wireMagnetTime();
+  if (step.key === 'secretions') wireSecretions();
+  updateNext();
+}
+function updateNext() {
+  const step = currentStep();
+  document.getElementById('nextBtn').disabled = !step.validate();
+}
+function next() {
+  if (!currentStep().validate()) return;
+  if (state.step < steps.length - 1) { state.step++; render(); window.scrollTo(0, 0); }
+}
+function back() {
+  if (state.step > 0) {
+    state.step--;
+    while (steps[state.step] && steps[state.step].skipIf && steps[state.step].skipIf()) state.step--;
+    render(); window.scrollTo(0, 0);
+  }
+}
+function restart() {
+  state.step = 0;
+  state.data = resetData();
+  state._historyAdded = false;
+  render();
+}
+window.next = next;
+window.back = back;
+window.restart = restart;
+
+// ---------- BOOTSTRAP ----------
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+loadPersistent();
+render();
+
+if (!state.ackedDisclaimer) {
+  document.getElementById('disclaimerOverlay').classList.add('visible');
+} else {
+  maybePromptPin();
+}
+</script>
+</body>
+</html>
